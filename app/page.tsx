@@ -82,7 +82,7 @@ export default function Page() {
         </motion.header>
 
         <div className="space-y-6">
-          <StatCards summary={summary} contributions={contributions} />
+          <StatCards summary={summary} contributions={contributions} prs={data.prs} />
 
           <ActionCenter triage={triage} prs={data.prs} />
 

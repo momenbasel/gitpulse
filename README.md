@@ -4,6 +4,10 @@
 
 ![GitPulse dashboard](docs/cover.png)
 
+Every stat card is clickable - drill into the exact pull requests behind it (mergeable, merged, open, closed) or a per-repository breakdown, with live search:
+
+![Drill-down modal](docs/modal.png)
+
 GitHub notifications are noise. GitPulse pulls *your* PR activity with the `gh` CLI and turns it into one calm, motion-rich view: what needs **you**, what's **waiting on others**, what's **ready to merge**, and what's gone **stale** - plus the analytics (merge rate, contribution heatmap, top repos, languages, activity timeline).
 
 No account data ships in this repo. You run one script locally with your own GitHub auth; the generated data file is gitignored and never leaves your machine. A synthetic demo dataset is committed so a fresh clone renders instantly.
