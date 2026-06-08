@@ -1,0 +1,39 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# --- PERSONAL DATA (never commit) ------------------------------------------
+# Raw GitHub pulls and the generated dashboard contain your private activity.
+/data/
+/public/dashboard.json
+# demo.json IS committed so a fresh clone renders. Real data stays local.
+
+# misc
+.DS_Store
+*.pem
+.vercel
+.env*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# editor
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# typescript build info
+*.tsbuildinfo
