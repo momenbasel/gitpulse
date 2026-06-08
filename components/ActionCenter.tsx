@@ -10,11 +10,25 @@ import {
   ExternalIcon,
   ClockIcon,
   CheckIcon,
+  CommentIcon,
+  EyeIcon,
 } from "@/lib/octicons";
 import { compact, ago, bucketMeta, bucketColor } from "@/lib/format";
 import CountUp from "@/components/CountUp";
 
 type TabKey = "all" | "mine" | "waiting" | "ready" | "stale";
+
+const reviewVerb = (state: string | null): string => {
+  if (state === "APPROVED") return "approved";
+  if (state === "CHANGES_REQUESTED") return "requested changes";
+  if (state === "DISMISSED") return "dismissed review";
+  return "reviewed";
+};
+const reviewColor = (state: string | null): string => {
+  if (state === "APPROVED") return "var(--color-open)";
+  if (state === "CHANGES_REQUESTED") return "var(--color-attention)";
+  return "var(--color-fg-subtle)";
+};
 
 interface TabDef {
   key: TabKey;
@@ -274,6 +288,35 @@ export default function ActionCenter({
                       </span>
                     </div>
                     <p className="truncate text-fg font-medium">{item.title}</p>
+                    {item.lastActivityAt ? (
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-subtle">
+                        {item.lastActivityKind === "review" ? (
+                          <span style={{ color: reviewColor(item.lastActivityState) }}>
+                            <EyeIcon size={11} />
+                          </span>
+                        ) : (
+                          <CommentIcon size={11} className="shrink-0" />
+                        )}
+                        <span className="truncate">
+                          {item.lastActivityKind === "review" ? (
+                            <span style={{ color: reviewColor(item.lastActivityState) }}>
+                              {reviewVerb(item.lastActivityState)}
+                            </span>
+                          ) : (
+                            "last comment"
+                          )}{" "}
+                          {item.lastActivityBy && (
+                            <span className="text-fg-muted">@{item.lastActivityBy}</span>
+                          )}{" "}
+                          · {ago(item.lastActivityDays)}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-subtle/70">
+                        <CommentIcon size={11} className="shrink-0" />
+                        <span>no replies yet</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Meta */}

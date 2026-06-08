@@ -55,6 +55,7 @@ const labelPool = [
   { name: "wip", color: "ededed" },
 ];
 
+const actors = ["alice-dev", "bob", "carol", "dependabot", "sentry-io", "review-bot", "maria", "sam"];
 const now = END.getTime();
 const days = (d) => Math.floor((now - new Date(d).getTime()) / dayMs);
 
@@ -77,12 +78,21 @@ function makePR(i) {
     reviewDecision = rr < 0.2 ? "APPROVED" : rr < 0.4 ? "CHANGES_REQUESTED" : rr < 0.7 ? "REVIEW_REQUIRED" : null;
   }
   const updatedAt = iso(now - idleDays * dayMs);
+  const commentCount = int(0, 14);
+  const hasComment = commentCount > 0 && rnd() < 0.8;
+  const lastCommentAt = hasComment ? iso(now - int(0, idleDays) * dayMs) : null;
+  const lastCommentBy = hasComment ? pick(actors) : null;
+  const hasReview = (status === "open" || status === "merged") && rnd() < 0.55;
+  const lastReviewAt = hasReview ? iso(now - int(0, idleDays) * dayMs) : null;
+  const lastReviewState = hasReview ? pick(["COMMENTED", "CHANGES_REQUESTED", "APPROVED"]) : null;
+  const lastReviewBy = hasReview ? pick(actors) : null;
   return {
     number: int(10, 4000), title: pick(titles), url: `https://github.com/${r.repo}/pull/${i}`,
     repo: r.repo, owner: r.repo.split("/")[0], private: r.private, stars: r.stars, lang: r.lang,
     status, draft, reviewDecision,
     additions: int(3, 600), deletions: int(0, 240), changedFiles: int(1, 22),
-    comments: int(0, 14), reviews: int(0, 5),
+    comments: commentCount, reviews: int(0, 5),
+    lastCommentAt, lastCommentBy, lastReviewAt, lastReviewState, lastReviewBy,
     createdAt, mergedAt, closedAt, updatedAt,
     labels: rnd() < 0.6 ? [pick(labelPool), pick(labelPool)].filter((v, idx, a) => a.indexOf(v) === idx) : [],
   };
@@ -108,6 +118,16 @@ for (const p of list) {
     if (bucket === "waiting") { bucket = "mine"; reason = `Stale ${p.idleDays}d - nudge or close`; priority = 3; }
   } else p.stale = false;
   p.bucket = bucket; p.priority = priority; p.reason = reason;
+  const acts = [];
+  if (p.lastCommentAt) acts.push({ at: p.lastCommentAt, by: p.lastCommentBy, kind: "comment" });
+  if (p.lastReviewAt) acts.push({ at: p.lastReviewAt, by: p.lastReviewBy, kind: "review", state: p.lastReviewState });
+  acts.sort((a, b) => new Date(b.at) - new Date(a.at));
+  const la = acts[0] || null;
+  p.lastActivityAt = la?.at || null;
+  p.lastActivityBy = la?.by || null;
+  p.lastActivityKind = la?.kind || null;
+  p.lastActivityState = la?.state || null;
+  p.lastActivityDays = la ? days(la.at) : null;
 }
 
 const ym = (d) => (d ? d.slice(0, 7) : null);
@@ -198,9 +218,20 @@ const out = {
     feed: active.slice().sort((a, b) => b.priority - a.priority || b.idleDays - a.idleDays).slice(0, 40).map((p) => ({
       number: p.number, title: p.title, repo: p.repo, url: p.url, bucket: p.bucket, reason: p.reason,
       priority: p.priority, ageDays: p.ageDays, idleDays: p.idleDays, stale: p.stale, draft: p.draft,
-      additions: p.additions, deletions: p.deletions, private: p.private,
+      additions: p.additions, deletions: p.deletions, private: p.private, comments: p.comments,
+      lastActivityAt: p.lastActivityAt, lastActivityBy: p.lastActivityBy,
+      lastActivityKind: p.lastActivityKind, lastActivityState: p.lastActivityState, lastActivityDays: p.lastActivityDays,
     })),
   },
+  recentMerges: list
+    .filter((p) => p.status === "merged" && p.mergedAt)
+    .sort((a, b) => new Date(b.mergedAt) - new Date(a.mergedAt))
+    .slice(0, 8)
+    .map((p) => ({
+      number: p.number, title: p.title, repo: p.repo, url: p.url,
+      mergedAt: p.mergedAt, mergedDays: days(p.mergedAt),
+      additions: p.additions, deletions: p.deletions, private: p.private,
+    })),
 };
 
 mkdirSync("public", { recursive: true });

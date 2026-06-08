@@ -16,6 +16,8 @@ const norm = (p) => {
   if (p.merged) status = "merged";
   else if (p.state === "OPEN") status = p.isDraft ? "draft" : "open";
   else status = "closed";
+  const lc = (p.comments?.nodes || [])[0]; // comments(last:1)
+  const lr = (p.reviews?.nodes || [])[0]; // reviews(last:1)
   return {
     number: p.number,
     title: p.title,
@@ -33,6 +35,11 @@ const norm = (p) => {
     changedFiles: p.changedFiles || 0,
     comments: p.comments?.totalCount || 0,
     reviews: p.reviews?.totalCount || 0,
+    lastCommentAt: lc?.createdAt || null,
+    lastCommentBy: lc?.author?.login || null,
+    lastReviewAt: lr?.createdAt || null,
+    lastReviewState: lr?.state || null,
+    lastReviewBy: lr?.author?.login || null,
     createdAt: p.createdAt,
     mergedAt: p.mergedAt,
     closedAt: p.closedAt,
@@ -64,6 +71,18 @@ for (const p of list) {
   p.bucket = bucket;
   p.priority = priority;
   p.reason = reason;
+
+  // most-recent human activity: last comment vs last review, whichever is newer
+  const acts = [];
+  if (p.lastCommentAt) acts.push({ at: p.lastCommentAt, by: p.lastCommentBy, kind: "comment" });
+  if (p.lastReviewAt) acts.push({ at: p.lastReviewAt, by: p.lastReviewBy, kind: "review", state: p.lastReviewState });
+  acts.sort((a, b) => new Date(b.at) - new Date(a.at));
+  const la = acts[0] || null;
+  p.lastActivityAt = la?.at || null;
+  p.lastActivityBy = la?.by || null;
+  p.lastActivityKind = la?.kind || null;
+  p.lastActivityState = la?.state || null;
+  p.lastActivityDays = la ? days(la.at) : null;
 }
 
 const by = (f) => list.reduce((m, p) => ((m[f(p)] = (m[f(p)] || 0) + 1), m), {});
@@ -138,8 +157,23 @@ const triage = {
       number: p.number, title: p.title, repo: p.repo, url: p.url, bucket: p.bucket,
       reason: p.reason, priority: p.priority, ageDays: p.ageDays, idleDays: p.idleDays,
       stale: p.stale, draft: p.draft, additions: p.additions, deletions: p.deletions, private: p.private,
+      comments: p.comments,
+      lastActivityAt: p.lastActivityAt, lastActivityBy: p.lastActivityBy,
+      lastActivityKind: p.lastActivityKind, lastActivityState: p.lastActivityState,
+      lastActivityDays: p.lastActivityDays,
     })),
 };
+
+// last merged PRs (covers the "last merged" column)
+const recentMerges = list
+  .filter((p) => p.status === "merged" && p.mergedAt)
+  .sort((a, b) => new Date(b.mergedAt) - new Date(a.mergedAt))
+  .slice(0, 8)
+  .map((p) => ({
+    number: p.number, title: p.title, repo: p.repo, url: p.url,
+    mergedAt: p.mergedAt, mergedDays: days(p.mergedAt),
+    additions: p.additions, deletions: p.deletions, private: p.private,
+  }));
 
 const cal = prof.contributionsCollection.contributionCalendar;
 const out = {
@@ -183,6 +217,7 @@ const out = {
   languages,
   prs: list,
   triage,
+  recentMerges,
 };
 
 mkdirSync("public", { recursive: true });

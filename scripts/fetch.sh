@@ -29,16 +29,15 @@ mkdir -p data public
 PAGES_DIR=data/_prs_pages
 rm -rf "$PAGES_DIR"; mkdir -p "$PAGES_DIR"
 
-PR_QUERY_FIRST='query($q:String!){ search(query:$q,type:ISSUE,first:50){ pageInfo{hasNextPage endCursor} nodes{ ...on PullRequest{
+PR_FIELDS='...on PullRequest{
   title number url state isDraft merged mergedAt createdAt closedAt updatedAt additions deletions changedFiles
-  comments{totalCount} reviewDecision
+  reviewDecision
   repository{nameWithOwner isPrivate stargazerCount primaryLanguage{name} owner{login}}
-  reviews(first:1){totalCount} labels(first:10){nodes{name color}} } } } }'
-PR_QUERY_NEXT='query($q:String!,$after:String!){ search(query:$q,type:ISSUE,first:50,after:$after){ pageInfo{hasNextPage endCursor} nodes{ ...on PullRequest{
-  title number url state isDraft merged mergedAt createdAt closedAt updatedAt additions deletions changedFiles
-  comments{totalCount} reviewDecision
-  repository{nameWithOwner isPrivate stargazerCount primaryLanguage{name} owner{login}}
-  reviews(first:1){totalCount} labels(first:10){nodes{name color}} } } } }'
+  comments(last:1){totalCount nodes{createdAt author{login}}}
+  reviews(last:1){totalCount nodes{createdAt state author{login}}}
+  labels(first:10){nodes{name color}} }'
+PR_QUERY_FIRST="query(\$q:String!){ search(query:\$q,type:ISSUE,first:50){ pageInfo{hasNextPage endCursor} nodes{ $PR_FIELDS } } }"
+PR_QUERY_NEXT="query(\$q:String!,\$after:String!){ search(query:\$q,type:ISSUE,first:50,after:\$after){ pageInfo{hasNextPage endCursor} nodes{ $PR_FIELDS } } }"
 
 cursor=""; page=0
 while :; do

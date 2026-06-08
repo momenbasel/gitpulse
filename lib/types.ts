@@ -101,6 +101,11 @@ export interface PR {
   changedFiles: number;
   comments: number;
   reviews: number;
+  lastCommentAt: string | null;
+  lastCommentBy: string | null;
+  lastReviewAt: string | null;
+  lastReviewState: string | null;
+  lastReviewBy: string | null;
   createdAt: string;
   mergedAt: string | null;
   closedAt: string | null;
@@ -112,6 +117,11 @@ export interface PR {
   bucket: Bucket;
   priority: number;
   reason: string;
+  lastActivityAt: string | null;
+  lastActivityBy: string | null;
+  lastActivityKind: "comment" | "review" | null;
+  lastActivityState: string | null;
+  lastActivityDays: number | null;
 }
 
 export interface FeedItem {
@@ -126,6 +136,24 @@ export interface FeedItem {
   idleDays: number;
   stale: boolean;
   draft: boolean;
+  additions: number;
+  deletions: number;
+  private: boolean;
+  comments: number;
+  lastActivityAt: string | null;
+  lastActivityBy: string | null;
+  lastActivityKind: "comment" | "review" | null;
+  lastActivityState: string | null;
+  lastActivityDays: number | null;
+}
+
+export interface RecentMerge {
+  number: number;
+  title: string;
+  repo: string;
+  url: string;
+  mergedAt: string;
+  mergedDays: number;
   additions: number;
   deletions: number;
   private: boolean;
@@ -154,4 +182,5 @@ export interface Dashboard {
   languages: Language[];
   prs: PR[];
   triage: Triage;
+  recentMerges: RecentMerge[];
 }

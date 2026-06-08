@@ -12,6 +12,7 @@ import ReviewDonut from "@/components/ReviewDonut";
 import RepoBars from "@/components/RepoBars";
 import ActivityTimeline from "@/components/ActivityTimeline";
 import Languages from "@/components/Languages";
+import RecentMerges from "@/components/RecentMerges";
 import {
   ZapIcon,
   PullRequestIcon,
@@ -94,8 +95,10 @@ export default function Page() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <RepoBars topRepos={data.topRepos} />
-            <Languages languages={data.languages} />
+            <RecentMerges merges={data.recentMerges} />
           </div>
+
+          <Languages languages={data.languages} />
         </div>
 
         <Footer login={profile.login} generatedAt={data.generatedAt} isDemo={isDemo} />
