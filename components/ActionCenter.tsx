@@ -12,7 +12,7 @@ import {
   EyeIcon,
   ArrowUpRightIcon,
 } from "@/lib/octicons";
-import { compact, ago, bucketMeta, bucketColor } from "@/lib/format";
+import { compact, ago, bucketColor } from "@/lib/format";
 import CountUp from "@/components/CountUp";
 import SectionHeader from "@/components/SectionHeader";
 
@@ -43,13 +43,6 @@ const TABS: TabDef[] = [
   { key: "ready", label: "Ready", color: "var(--color-open)" },
   { key: "stale", label: "Stale", color: "var(--color-fg-subtle)" },
 ];
-
-function glowFor(bucket: string): string {
-  if (bucket === "ready") return bucketMeta.ready.glow;
-  if (bucket === "mine") return bucketMeta.mine.glow;
-  if (bucket === "waiting") return bucketMeta.waiting.glow;
-  return "rgba(110,118,129,0.3)";
-}
 
 export default function ActionCenter({
   triage,
@@ -103,19 +96,16 @@ export default function ActionCenter({
         index="02"
         title="Action center"
         hint="What actually needs you — sorted by priority, then idle time"
-        icon={<AlertIcon size={15} />}
+        icon={<AlertIcon size={14} />}
         iconColor="var(--color-attention)"
         right={
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap items-center gap-3">
             {pills.map((p) => (
-              <span
-                key={p.label}
-                className="flex items-center gap-1.5 rounded-md border px-2 py-1"
-                style={{
-                  borderColor: `color-mix(in srgb, ${p.color} 35%, transparent)`,
-                  background: `color-mix(in srgb, ${p.color} 8%, transparent)`,
-                }}
-              >
+              <span key={p.label} className="flex items-center gap-1.5">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: p.color }}
+                />
                 <span className="mono text-xs font-semibold" style={{ color: p.color }}>
                   <CountUp value={p.value} />
                 </span>
@@ -126,8 +116,8 @@ export default function ActionCenter({
         }
       />
 
-      {/* Tabs */}
-      <div className="mt-5 flex flex-wrap gap-1 rounded-lg border border-border-muted bg-canvas-inset/60 p-1">
+      {/* Tabs — plain text with an animated underline, no segmented boxes */}
+      <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 border-b border-border-muted">
         {TABS.map((t) => {
           const active = tab === t.key;
           const count = counts[t.key];
@@ -136,43 +126,33 @@ export default function ActionCenter({
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className="relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none"
+              className="relative flex items-center gap-1.5 pb-2.5 text-xs font-medium transition-colors focus:outline-none"
               style={{ color: active ? t.color : "var(--color-fg-muted)" }}
             >
-              {active && (
-                <motion.span
-                  layoutId="action-tab-pill"
-                  className="absolute inset-0 rounded-md border"
-                  style={{
-                    borderColor: `color-mix(in srgb, ${t.color} 55%, transparent)`,
-                    background: `color-mix(in srgb, ${t.color} 12%, transparent)`,
-                  }}
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                />
-              )}
-              <span className="relative z-10">{t.label}</span>
+              <span>{t.label}</span>
               <span
-                className="relative z-10 mono rounded-sm px-1.5 py-0.5 text-[10px] leading-none"
-                style={{
-                  background: active
-                    ? `color-mix(in srgb, ${t.color} 22%, transparent)`
-                    : "var(--color-surface-2)",
-                  color: active ? t.color : "var(--color-fg-subtle)",
-                }}
+                className="mono text-[10px] leading-none"
+                style={{ color: active ? t.color : "var(--color-fg-subtle)" }}
               >
                 {count}
               </span>
+              {active && (
+                <motion.span
+                  layoutId="action-tab-underline"
+                  className="absolute inset-x-0 -bottom-px h-[2px]"
+                  style={{ background: t.color }}
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                />
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Column header (desktop) — the "database index" register */}
+      {/* Column header (desktop) — the register key */}
       {filtered.length > 0 && (
-        <div className="mt-4 hidden items-center gap-3 px-4 sm:flex">
-          <span className="w-[3px] shrink-0" />
-          <span className="w-1.5 shrink-0" />
-          <span className="label-caps w-7 shrink-0 !text-[9px]">n°</span>
+        <div className="hidden items-center gap-3 border-b border-border-muted px-2 py-2 sm:flex">
+          <span className="label-caps w-8 shrink-0 !text-[9px]">n°</span>
           <span className="label-caps hidden w-40 shrink-0 !text-[9px] lg:block">
             signal
           </span>
@@ -180,19 +160,19 @@ export default function ActionCenter({
           <span className="label-caps w-[10.5rem] shrink-0 !text-[9px] text-right">
             idle / age / ±lines
           </span>
-          <span className="w-5 shrink-0" />
+          <span className="w-4 shrink-0" />
         </div>
       )}
 
-      {/* List */}
-      <div className="fade-mask-b mt-2 max-h-[30rem] space-y-1.5 overflow-y-auto pr-1 pb-6">
+      {/* Register — hairline-divided rows, no boxes */}
+      <div className="fade-mask-b max-h-[30rem] overflow-y-auto pb-6">
         {filtered.length === 0 ? (
           <motion.div
             key={`empty-${tab}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-muted bg-surface-2/40 py-12 text-center"
+            className="flex flex-col items-center justify-center gap-2 py-14 text-center"
           >
             <span style={{ color: "var(--color-open)" }}>
               <CheckIcon size={28} />
@@ -204,7 +184,6 @@ export default function ActionCenter({
           <AnimatePresence mode="popLayout" initial={false}>
             {filtered.map((item, i) => {
               const color = bucketColor(item.bucket);
-              const glow = glowFor(item.bucket);
               return (
                 <motion.a
                   key={item.number}
@@ -220,47 +199,22 @@ export default function ActionCenter({
                     ease: "easeOut",
                     delay: Math.min(i * 0.03, 0.4),
                   }}
-                  className="group flex items-center gap-3 rounded-lg border border-border-muted bg-surface-2/50 px-4 py-3 transition-colors hover:bg-surface-2"
-                  style={{ ["--row-color" as string]: color }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor =
-                      "var(--color-border-muted)";
-                  }}
+                  className="group flex items-center gap-3 border-b border-border-muted px-2 py-3 transition-colors hover:bg-surface-2/50"
                   aria-label={`PR #${item.number} in ${item.repo}: ${item.title}`}
                 >
-                  {/* Priority bar */}
+                  {/* index — carries the bucket color, like an edition number */}
                   <span
-                    className="h-9 w-[3px] shrink-0 rounded-full"
-                    style={{
-                      background: color,
-                      boxShadow: `0 0 8px ${glow}`,
-                    }}
-                  />
-
-                  {/* hover dot reveal (fixed width so columns stay registered) */}
-                  <span className="flex w-1.5 shrink-0 justify-center">
-                    <span
-                      className="block h-1.5 w-1.5 rounded-full opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                      style={{ background: color, boxShadow: `0 0 6px ${glow}` }}
-                    />
-                  </span>
-
-                  {/* index */}
-                  <span className="mono hidden w-7 shrink-0 text-[11px] text-fg-subtle sm:block">
+                    className="mono w-8 shrink-0 text-[11px] font-semibold"
+                    style={{ color }}
+                  >
                     {String(i + 1).padStart(2, "0")}
                   </span>
 
                   {/* Reason chip — fixed column, full text in tooltip */}
                   <span
                     title={item.reason}
-                    className="hidden w-40 shrink-0 truncate whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider lg:inline-block"
-                    style={{
-                      background: `color-mix(in srgb, ${color} 13%, transparent)`,
-                      color,
-                    }}
+                    className="hidden w-40 shrink-0 truncate whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider lg:inline-block"
+                    style={{ color }}
                   >
                     {item.reason}
                   </span>
@@ -286,7 +240,7 @@ export default function ActionCenter({
                         #{item.number}
                       </span>
                     </div>
-                    <p className="truncate text-fg font-medium transition-colors group-hover:text-white">
+                    <p className="truncate text-fg font-medium underline decoration-transparent underline-offset-[3px] transition-colors group-hover:decoration-fg-muted">
                       {item.title}
                     </p>
                     {item.lastActivityAt ? (
@@ -344,8 +298,8 @@ export default function ActionCenter({
                   </div>
 
                   {/* Arrow — whole row is the link */}
-                  <span className="grid w-5 shrink-0 place-items-center text-fg-subtle transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-fg">
-                    <ArrowUpRightIcon size={14} />
+                  <span className="grid w-4 shrink-0 place-items-center text-fg-subtle opacity-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-fg group-hover:opacity-100">
+                    <ArrowUpRightIcon size={13} />
                   </span>
                 </motion.a>
               );

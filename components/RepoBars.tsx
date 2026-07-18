@@ -86,7 +86,9 @@ export default function RepoBars({ topRepos }: { topRepos: RepoStat[] }) {
                 </span>
                 <span className="min-w-0 truncate text-sm text-fg-muted transition-colors group-hover:text-accent">
                   {owner && <span>{owner}/</span>}
-                  <span className="font-semibold text-fg group-hover:text-accent">{name}</span>
+                  <span className="font-semibold text-fg underline decoration-transparent underline-offset-[3px] transition-colors group-hover:text-accent group-hover:decoration-accent/60">
+                    {name}
+                  </span>
                 </span>
                 {r.private && (
                   <span className="text-fg-subtle">
@@ -105,7 +107,7 @@ export default function RepoBars({ topRepos }: { topRepos: RepoStat[] }) {
                       {compact(r.stars)}
                     </span>
                   )}
-                  <span className="mono rounded-sm border border-border-muted bg-surface px-1.5 py-0.5 text-xs text-fg-muted">
+                  <span className="mono text-xs text-fg-muted">
                     {compact(r.total)}
                   </span>
                 </div>

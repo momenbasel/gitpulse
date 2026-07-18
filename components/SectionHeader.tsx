@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
 /**
- * Numbered instrument section marker: mono index, hairline rule, uppercase
- * wide-tracked title, optional hint and right-aligned content.
+ * Numbered instrument section marker: mono index, uppercase wide-tracked
+ * title, optional hint and right-aligned content. Hierarchy comes from
+ * type and spacing — plain leading glyph, no icon containers.
  *   02 / ACTION CENTER ──────────────── What actually needs you
  */
 export default function SectionHeader({
@@ -21,16 +22,9 @@ export default function SectionHeader({
   right?: ReactNode;
 }) {
   return (
-    <header className="flex items-center gap-3">
+    <header className="flex items-center gap-2.5">
       {icon && (
-        <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-md border"
-          style={{
-            color: iconColor,
-            borderColor: `color-mix(in srgb, ${iconColor} 30%, transparent)`,
-            background: `color-mix(in srgb, ${iconColor} 9%, transparent)`,
-          }}
-        >
+        <span className="grid shrink-0 place-items-center" style={{ color: iconColor }}>
           {icon}
         </span>
       )}

@@ -26,7 +26,7 @@ export default function RecentMerges({ merges }: { merges: RecentMerge[] }) {
       <SectionHeader
         index="07"
         title="Recently merged"
-        icon={<MergeIcon size={15} />}
+        icon={<MergeIcon size={14} />}
         iconColor="var(--color-merged)"
         right={
           <span className="mono text-sm text-fg-muted">
@@ -38,7 +38,7 @@ export default function RecentMerges({ merges }: { merges: RecentMerge[] }) {
       {merges.length === 0 ? (
         <p className="py-8 text-center text-sm text-fg-muted">No merges yet.</p>
       ) : (
-        <ol className="mt-4 space-y-1.5">
+        <ol className="mt-3">
           {merges.map((m, i) => (
             <motion.li
               key={m.number + m.repo}
@@ -51,17 +51,14 @@ export default function RecentMerges({ merges }: { merges: RecentMerge[] }) {
                 href={m.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex items-center gap-3 rounded-lg border border-border-muted bg-surface-2/50 px-3 py-2.5 transition-colors hover:border-[color:var(--color-merged)]/50 hover:bg-surface-2"
+                className="group flex items-center gap-3 border-b border-border-muted px-1 py-2.5 transition-colors hover:bg-surface-2/50"
                 aria-label={`Merged PR #${m.number} in ${m.repo}: ${m.title}`}
               >
-                <span
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-md border"
-                  style={{
-                    borderColor: "color-mix(in srgb, var(--color-merged) 30%, transparent)",
-                    background: "color-mix(in srgb, var(--color-merged) 10%, transparent)",
-                    color: "var(--color-merged)",
-                  }}
-                >
+                <span className="mono w-6 shrink-0 text-[10px] text-fg-subtle">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
+                <span className="shrink-0" style={{ color: "var(--color-merged)" }}>
                   <MergeIcon size={13} />
                 </span>
 
@@ -72,7 +69,9 @@ export default function RecentMerges({ merges }: { merges: RecentMerge[] }) {
                     {m.private && <Lock />}
                     <span className="mono shrink-0 text-fg-subtle">#{m.number}</span>
                   </div>
-                  <p className="truncate text-sm font-medium text-fg">{m.title}</p>
+                  <p className="truncate text-sm font-medium text-fg underline decoration-transparent underline-offset-[3px] transition-colors group-hover:decoration-fg-muted">
+                    {m.title}
+                  </p>
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-0.5 text-[11px] text-fg-subtle">
@@ -83,7 +82,7 @@ export default function RecentMerges({ merges }: { merges: RecentMerge[] }) {
                   </span>
                 </div>
 
-                <span className="shrink-0 text-fg-subtle transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-fg">
+                <span className="grid w-4 shrink-0 place-items-center text-fg-subtle opacity-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-fg group-hover:opacity-100">
                   <ArrowUpRightIcon size={13} />
                 </span>
               </a>

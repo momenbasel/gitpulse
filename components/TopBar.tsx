@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import type { Profile } from "@/lib/types";
 import { GithubIcon } from "@/lib/octicons";
 import { ago } from "@/lib/format";
-import CornerBrackets from "@/components/CornerBrackets";
 
 interface Props {
   profile: Profile;
@@ -36,15 +35,9 @@ export default function TopBar({ profile, isDemo, generatedAt }: Props) {
       className="sticky top-0 z-50 border-b border-border-muted bg-canvas-inset/80 backdrop-blur-xl backdrop-saturate-150"
     >
       <div className="mx-auto flex h-[60px] max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
-        {/* Brand */}
-        <div className="group relative flex min-w-0 items-center gap-3">
-          <div className="relative">
-            <CornerBrackets offset={-4} />
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-fg">
-              <GithubIcon size={18} />
-            </div>
-          </div>
-
+        {/* Brand — plain mark + wordmark, no container */}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <GithubIcon size={20} className="shrink-0 text-fg" />
           <div className="flex min-w-0 flex-col leading-none">
             <span className="text-[15px] font-semibold tracking-tight text-fg">
               Git<span className="text-accent">Pulse</span>
@@ -61,7 +54,7 @@ export default function TopBar({ profile, isDemo, generatedAt }: Props) {
         {/* Right cluster */}
         <div className="ml-auto flex items-center gap-2.5 sm:gap-4">
           {isDemo && (
-            <span className="hidden items-center gap-1.5 rounded-sm border border-[var(--color-attention)]/35 bg-[var(--color-attention)]/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-attention)] sm:flex">
+            <span className="hidden items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-attention)] sm:flex">
               <span className="relative flex h-1.5 w-1.5">
                 <motion.span
                   className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-attention)]"
@@ -90,32 +83,19 @@ export default function TopBar({ profile, isDemo, generatedAt }: Props) {
               </span>
             </div>
 
-            <div className="relative h-9 w-9 shrink-0">
-              {/* radar sweep ring — single hue, slow rotation */}
-              <motion.span
-                aria-hidden="true"
-                className="absolute -inset-[3px] rounded-full opacity-60"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, transparent 0deg 300deg, var(--color-accent) 345deg, transparent 360deg)",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            {showAvatarImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profile.avatarUrl}
+                alt={profile.name || profile.login}
+                onError={() => setImgFailed(true)}
+                className="h-8 w-8 shrink-0 rounded-full bg-surface object-cover ring-1 ring-border"
               />
-              {showAvatarImg ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.avatarUrl}
-                  alt={profile.name || profile.login}
-                  onError={() => setImgFailed(true)}
-                  className="relative h-9 w-9 rounded-full bg-surface object-cover ring-2 ring-canvas-inset"
-                />
-              ) : (
-                <span className="relative grid h-9 w-9 place-items-center rounded-full bg-surface-2 text-[13px] font-semibold text-fg ring-2 ring-canvas-inset">
-                  {initial}
-                </span>
-              )}
-            </div>
+            ) : (
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-2 text-[13px] font-semibold text-fg ring-1 ring-border">
+                {initial}
+              </span>
+            )}
           </div>
         </div>
       </div>

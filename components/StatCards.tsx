@@ -10,9 +10,9 @@ import {
   DraftIcon,
   CheckIcon,
   RepoIcon,
-  ExternalIcon,
   CommentIcon,
   EyeIcon,
+  ArrowUpRightIcon,
 } from "@/lib/octicons";
 import { compact, ago, statusColor } from "@/lib/format";
 import CountUp from "@/components/CountUp";
@@ -74,7 +74,7 @@ function PRRows({ items }: { items: PR[] }) {
 
   return (
     <>
-      <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[color:var(--color-surface)]/85 px-1 pb-2 pt-1 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-1 mb-1 bg-[color:var(--color-surface)]/85 px-1 pb-2 pt-1 backdrop-blur">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -85,7 +85,7 @@ function PRRows({ items }: { items: PR[] }) {
       {filtered.length === 0 ? (
         <p className="py-10 text-center text-sm text-fg-muted">No matches.</p>
       ) : (
-        <ul className="space-y-1.5">
+        <ul>
           {filtered.map((p, i) => {
             const Icon = statusIcon[p.status];
             const color = statusColor[p.status];
@@ -95,10 +95,10 @@ function PRRows({ items }: { items: PR[] }) {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: Math.min(i * 0.012, 0.4) }}
-                className="group flex items-center gap-3 rounded-lg border border-border-muted bg-surface-2/40 px-3 py-2.5 transition-colors hover:border-border"
+                className="group flex items-center gap-3 border-b border-border-muted px-1 py-2.5 transition-colors hover:bg-surface-2/50"
               >
                 <span className="shrink-0" style={{ color }}>
-                  <Icon size={15} />
+                  <Icon size={14} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 text-[11px] text-fg-muted">
@@ -106,7 +106,9 @@ function PRRows({ items }: { items: PR[] }) {
                     {p.private && <Lock />}
                     <span className="mono shrink-0 text-fg-subtle">#{p.number}</span>
                   </div>
-                  <p className="truncate text-sm font-medium text-fg">{p.title}</p>
+                  <p className="truncate text-sm font-medium text-fg underline decoration-transparent underline-offset-[3px] transition-colors group-hover:decoration-fg-muted">
+                    {p.title}
+                  </p>
                   {p.lastActivityAt && (
                     <span className="mt-0.5 flex items-center gap-1 text-[10px] text-fg-subtle">
                       {p.lastActivityKind === "review" ? <EyeIcon size={10} /> : <CommentIcon size={10} />}
@@ -127,10 +129,10 @@ function PRRows({ items }: { items: PR[] }) {
                   href={p.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-surface hover:text-fg"
+                  className="shrink-0 p-1 text-fg-subtle opacity-0 transition-all hover:text-fg group-hover:opacity-100"
                   aria-label={`Open PR #${p.number}`}
                 >
-                  <ExternalIcon size={13} />
+                  <ArrowUpRightIcon size={13} />
                 </a>
               </motion.li>
             );
@@ -153,7 +155,7 @@ function RepoRows({ items }: { items: PR[] }) {
   }, [items]);
 
   return (
-    <ul className="space-y-1.5">
+    <ul>
       {repos.map((r, i) => {
         const seg = (n: number, c: string) =>
           n > 0 ? <span style={{ width: `${(n / r.total) * 100}%`, background: c }} className="h-full" /> : null;
@@ -163,9 +165,9 @@ function RepoRows({ items }: { items: PR[] }) {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: Math.min(i * 0.015, 0.4) }}
-            className="rounded-lg border border-border-muted bg-surface-2/40 px-3 py-2.5"
+            className="border-b border-border-muted px-1 py-2.5"
           >
-            <div className="mb-1.5 flex items-center gap-1.5 text-sm">
+            <div className="mb-1.5 flex items-center gap-2 text-sm">
               <span className="mono w-6 shrink-0 text-[10px] text-fg-subtle">
                 {String(i + 1).padStart(2, "0")}
               </span>
@@ -174,7 +176,7 @@ function RepoRows({ items }: { items: PR[] }) {
               {r.private && <Lock />}
               <span className="mono ml-auto shrink-0 text-fg-muted">{r.total}</span>
             </div>
-            <div className="ml-6 flex h-1.5 overflow-hidden rounded-full bg-surface">
+            <div className="ml-8 flex h-1 overflow-hidden rounded-full bg-surface-2">
               {seg(r.merged, "var(--color-merged)")}
               {seg(r.open, "var(--color-open)")}
               {seg(r.closed, "var(--color-closed)")}
@@ -283,35 +285,21 @@ export default function StatCards({
               />
               <CornerBrackets offset={5} />
 
-              {/* hover "view" affordance */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute right-3 top-3 translate-x-1 text-fg-subtle opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
-                style={{ color: c.color }}
-              >
-                <ExternalIcon size={13} />
-              </span>
-
               <div className="relative flex flex-col gap-2.5">
-                <div className="flex items-start justify-between">
-                  <span
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border transition-transform duration-300 group-hover:scale-110"
-                    style={{
-                      borderColor: `color-mix(in srgb, ${c.color} 28%, transparent)`,
-                      backgroundColor: `color-mix(in srgb, ${c.color} 9%, transparent)`,
-                      color: c.color,
-                    }}
-                  >
-                    <Icon size={15} />
-                  </span>
+                <div className="flex items-center justify-between">
                   <span className="mono text-[10px] tracking-wider text-fg-subtle/80">
                     {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span style={{ color: c.color }}>
+                    <Icon size={14} />
                   </span>
                 </div>
                 <div className="mono text-[1.65rem] font-bold leading-none tracking-tight text-fg">
                   <CountUp value={c.value} decimals={c.decimals} suffix={c.suffix} />
                 </div>
-                <div className="label-caps !text-[10px]">{c.label}</div>
+                <div className="label-caps !text-[10px]" style={{ color: c.color }}>
+                  {c.label}
+                </div>
                 {c.sub && (
                   <div className="truncate border-t border-border-muted pt-2 text-[11px] text-fg-subtle">
                     {c.sub}

@@ -74,14 +74,7 @@ export default function PRListModal({
             <div className="h-px w-full shrink-0" style={{ background: accent }} />
 
             <header className="flex items-center gap-3 border-b border-border-muted px-5 py-4">
-              <span
-                className="mono grid h-9 w-9 shrink-0 place-items-center rounded-md border text-sm font-bold"
-                style={{
-                  borderColor: `color-mix(in srgb, ${accent} 35%, transparent)`,
-                  background: `color-mix(in srgb, ${accent} 10%, transparent)`,
-                  color: accent,
-                }}
-              >
+              <span className="mono shrink-0 text-xl font-bold" style={{ color: accent }}>
                 {count}
               </span>
               <div className="min-w-0">

@@ -203,8 +203,8 @@ function ErrorState({ message }: { message: string | null }) {
         animate={{ opacity: 1, scale: 1 }}
         className="card max-w-md p-8 text-center"
       >
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-xl border border-[color:var(--color-accent)]/30 bg-[color:var(--color-accent)]/10">
-          <GithubIcon size={28} className="text-accent" />
+        <div className="mx-auto mb-4 grid place-items-center text-accent">
+          <GithubIcon size={30} />
         </div>
         <p className="label-caps mb-2">No signal</p>
         <h2 className="text-xl font-bold tracking-tight">No data yet</h2>
