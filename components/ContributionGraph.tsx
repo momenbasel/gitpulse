@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import type { CalDay, Contributions } from "@/lib/types";
 import { CalendarIcon } from "@/lib/octicons";
 import { monthLabel, relDate } from "@/lib/format";
 import CountUp from "@/components/CountUp";
+import SectionHeader from "@/components/SectionHeader";
 
 const CELL = 11;
 const PITCH = 13;
@@ -32,6 +33,7 @@ export default function ContributionGraph({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const [hoverWeek, setHoverWeek] = useState<number | null>(null);
 
   const weeks = calendar.length;
   const gridW = weeks * PITCH;
@@ -52,6 +54,17 @@ export default function ContributionGraph({
     }
   });
 
+  // Latest day in the calendar gets the "now" ring (works for demo + real data).
+  const latest = useMemo(() => {
+    let found: { wi: number; di: number; date: string } | null = null;
+    calendar.forEach((week, wi) =>
+      week.forEach((day, di) => {
+        if (!found || day.date > found.date) found = { wi, di, date: day.date };
+      })
+    );
+    return found;
+  }, [calendar]);
+
   return (
     <motion.section
       ref={ref}
@@ -61,87 +74,122 @@ export default function ContributionGraph({
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-open)]/15 text-[var(--color-open)]">
-          <CalendarIcon size={16} />
-        </span>
-        <h2 className="text-fg font-semibold">Contribution activity</h2>
-        <span className="mono ml-auto text-sm text-fg-muted">
-          <CountUp value={contributions.year} /> contributions in the last year
-        </span>
-      </div>
+      <SectionHeader
+        index="03"
+        title="Contribution activity"
+        hint="Hover a column to isolate the week"
+        icon={<CalendarIcon size={15} />}
+        iconColor="var(--color-open)"
+        right={
+          <span className="mono text-sm text-fg-muted">
+            <CountUp value={contributions.year} />{" "}
+            <span className="label-caps">contributions / year</span>
+          </span>
+        }
+      />
 
-      <svg
-        width="100%"
-        viewBox={`0 0 ${vbW} ${vbH}`}
-        preserveAspectRatio="xMinYMin meet"
-        role="img"
-        aria-label="Contribution heatmap for the last year"
-        className="overflow-visible"
-      >
-        {/* Month labels */}
-        {monthMarks.map((m, i) => (
-          <text
-            key={`m-${i}`}
-            x={m.x}
-            y={LABEL_TOP - 6}
-            className="fill-fg-muted"
-            style={{ fontSize: 9 }}
-          >
-            {m.label}
-          </text>
-        ))}
+      <div className="mt-5" onMouseLeave={() => setHoverWeek(null)}>
+        <svg
+          width="100%"
+          viewBox={`0 0 ${vbW} ${vbH}`}
+          preserveAspectRatio="xMinYMin meet"
+          role="img"
+          aria-label="Contribution heatmap for the last year"
+          className="overflow-visible"
+        >
+          {/* Month labels */}
+          {monthMarks.map((m, i) => (
+            <text
+              key={`m-${i}`}
+              x={m.x}
+              y={LABEL_TOP - 6}
+              className="fill-fg-muted"
+              style={{ fontSize: 9, letterSpacing: "0.08em" }}
+            >
+              {m.label}
+            </text>
+          ))}
 
-        {/* Weekday labels */}
-        {WEEKDAYS.map((d) => (
-          <text
-            key={`wd-${d}`}
-            x={LABEL_LEFT - 6}
-            y={LABEL_TOP + WEEKDAY_ROWS[d] * PITCH + CELL - 2}
-            textAnchor="end"
-            className="fill-fg-muted"
-            style={{ fontSize: 9 }}
-          >
-            {d}
-          </text>
-        ))}
+          {/* Weekday labels */}
+          {WEEKDAYS.map((d) => (
+            <text
+              key={`wd-${d}`}
+              x={LABEL_LEFT - 6}
+              y={LABEL_TOP + WEEKDAY_ROWS[d] * PITCH + CELL - 2}
+              textAnchor="end"
+              className="fill-fg-muted"
+              style={{ fontSize: 9 }}
+            >
+              {d}
+            </text>
+          ))}
 
-        {/* Cells */}
-        {calendar.map((week, wi) =>
-          week.map((day, di) => (
-            <motion.rect
-              key={`${wi}-${di}`}
-              x={LABEL_LEFT + wi * PITCH}
-              y={LABEL_TOP + di * PITCH}
-              width={CELL}
-              height={CELL}
-              rx={2}
-              fill={day.color || "var(--color-cal-0)"}
-              style={{ transformBox: "fill-box", transformOrigin: "center" }}
-              initial={{ opacity: 0, scale: 0.4 }}
-              animate={
-                inView
-                  ? { opacity: 1, scale: 1 }
-                  : { opacity: 0, scale: 0.4 }
-              }
-              transition={{
-                duration: 0.35,
-                ease: "easeOut",
-                delay: (wi + di) * 0.012,
+          {/* Cells, grouped per week for column isolation on hover */}
+          {calendar.map((week, wi) => (
+            <g
+              key={`w-${wi}`}
+              onMouseEnter={() => setHoverWeek(wi)}
+              style={{
+                opacity: hoverWeek === null || hoverWeek === wi ? 1 : 0.28,
+                transition: "opacity 180ms ease",
               }}
             >
-              <title>
-                {day.count} {day.count === 1 ? "contribution" : "contributions"} on{" "}
-                {relDate(day.date)}
-              </title>
+              {week.map((day, di) => (
+                <motion.rect
+                  key={`${wi}-${di}`}
+                  x={LABEL_LEFT + wi * PITCH}
+                  y={LABEL_TOP + di * PITCH}
+                  width={CELL}
+                  height={CELL}
+                  rx={2}
+                  fill={day.color || "var(--color-cal-0)"}
+                  style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={
+                    inView
+                      ? { opacity: 1, scale: 1 }
+                      : { opacity: 0, scale: 0.4 }
+                  }
+                  whileHover={{ scale: 1.35 }}
+                  transition={{
+                    duration: 0.35,
+                    ease: "easeOut",
+                    delay: (wi + di) * 0.012,
+                  }}
+                >
+                  <title>
+                    {day.count} {day.count === 1 ? "contribution" : "contributions"} on{" "}
+                    {relDate(day.date)}
+                  </title>
+                </motion.rect>
+              ))}
+            </g>
+          ))}
+
+          {/* "now" ring on the latest day */}
+          {latest && inView && (
+            <motion.rect
+              x={LABEL_LEFT + (latest as { wi: number }).wi * PITCH - 2}
+              y={LABEL_TOP + (latest as { di: number }).di * PITCH - 2}
+              width={CELL + 4}
+              height={CELL + 4}
+              rx={3.5}
+              fill="none"
+              stroke="var(--color-accent)"
+              strokeWidth={1.25}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0.55, 1] }}
+              transition={{ duration: 1.6, delay: 1.1 }}
+            >
+              <title>Most recent day</title>
             </motion.rect>
-          ))
-        )}
-      </svg>
+          )}
+        </svg>
+      </div>
 
       {/* Legend */}
-      <div className="mt-3 flex items-center justify-end gap-2 text-xs text-fg-muted">
-        <span>Less</span>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <span className="label-caps">Less</span>
         <svg
           width={5 * PITCH}
           height={CELL}
@@ -160,7 +208,7 @@ export default function ContributionGraph({
             />
           ))}
         </svg>
-        <span>More</span>
+        <span className="label-caps">More</span>
       </div>
     </motion.section>
   );

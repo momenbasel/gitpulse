@@ -5,16 +5,16 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Triage, PR } from "@/lib/types";
 import {
   AlertIcon,
-  ZapIcon,
   RepoIcon,
-  ExternalIcon,
   ClockIcon,
   CheckIcon,
   CommentIcon,
   EyeIcon,
+  ArrowUpRightIcon,
 } from "@/lib/octicons";
 import { compact, ago, bucketMeta, bucketColor } from "@/lib/format";
 import CountUp from "@/components/CountUp";
+import SectionHeader from "@/components/SectionHeader";
 
 type TabKey = "all" | "mine" | "waiting" | "ready" | "stale";
 
@@ -99,70 +99,35 @@ export default function ActionCenter({
 
   return (
     <section className="card p-5 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-muted"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(210,153,34,0.18), rgba(47,129,247,0.14))",
-              color: "var(--color-attention)",
-            }}
-          >
-            <span className="relative inline-flex">
-              <AlertIcon size={16} />
-              <motion.span
-                className="absolute -right-1 -top-1"
-                style={{ color: "var(--color-accent)" }}
-                animate={{ opacity: [0.4, 1, 0.4], scale: [0.85, 1, 0.85] }}
-                transition={{
-                  duration: 2.4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
+      <SectionHeader
+        index="02"
+        title="Action center"
+        hint="What actually needs you — sorted by priority, then idle time"
+        icon={<AlertIcon size={15} />}
+        iconColor="var(--color-attention)"
+        right={
+          <div className="flex flex-wrap gap-1.5">
+            {pills.map((p) => (
+              <span
+                key={p.label}
+                className="flex items-center gap-1.5 rounded-md border px-2 py-1"
+                style={{
+                  borderColor: `color-mix(in srgb, ${p.color} 35%, transparent)`,
+                  background: `color-mix(in srgb, ${p.color} 8%, transparent)`,
                 }}
               >
-                <ZapIcon size={9} />
-              </motion.span>
-            </span>
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-fg font-semibold leading-tight">
-              Action Center
-            </h2>
-            <p className="text-fg-muted text-xs sm:text-sm">
-              What actually needs you — sorted by priority
-            </p>
-          </div>
-        </div>
-
-        {/* Summary pills */}
-        <div className="flex flex-wrap gap-2">
-          {pills.map((p, i) => (
-            <motion.div
-              key={p.label}
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.45, delay: i * 0.04, ease: "easeOut" }}
-              className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
-              style={{
-                borderColor: p.color,
-                background: `color-mix(in srgb, ${p.color} 12%, transparent)`,
-                color: p.color,
-              }}
-            >
-              <span className="mono font-semibold">
-                <CountUp value={p.value} />
+                <span className="mono text-xs font-semibold" style={{ color: p.color }}>
+                  <CountUp value={p.value} />
+                </span>
+                <span className="label-caps !text-[9px]">{p.label}</span>
               </span>
-              <span className="text-fg-muted">{p.label}</span>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
+        }
+      />
 
       {/* Tabs */}
-      <div className="mt-5 flex flex-wrap gap-1 rounded-xl border border-border-muted bg-canvas-inset/60 p-1">
+      <div className="mt-5 flex flex-wrap gap-1 rounded-lg border border-border-muted bg-canvas-inset/60 p-1">
         {TABS.map((t) => {
           const active = tab === t.key;
           const count = counts[t.key];
@@ -171,23 +136,23 @@ export default function ActionCenter({
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className="relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none"
+              className="relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none"
               style={{ color: active ? t.color : "var(--color-fg-muted)" }}
             >
               {active && (
                 <motion.span
                   layoutId="action-tab-pill"
-                  className="absolute inset-0 rounded-lg border"
+                  className="absolute inset-0 rounded-md border"
                   style={{
-                    borderColor: t.color,
-                    background: `color-mix(in srgb, ${t.color} 14%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${t.color} 55%, transparent)`,
+                    background: `color-mix(in srgb, ${t.color} 12%, transparent)`,
                   }}
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}
               <span className="relative z-10">{t.label}</span>
               <span
-                className="relative z-10 mono rounded-full px-1.5 py-0.5 text-[10px] leading-none"
+                className="relative z-10 mono rounded-sm px-1.5 py-0.5 text-[10px] leading-none"
                 style={{
                   background: active
                     ? `color-mix(in srgb, ${t.color} 22%, transparent)`
@@ -202,8 +167,25 @@ export default function ActionCenter({
         })}
       </div>
 
+      {/* Column header (desktop) — the "database index" register */}
+      {filtered.length > 0 && (
+        <div className="mt-4 hidden items-center gap-3 px-4 sm:flex">
+          <span className="w-[3px] shrink-0" />
+          <span className="w-1.5 shrink-0" />
+          <span className="label-caps w-7 shrink-0 !text-[9px]">n°</span>
+          <span className="label-caps hidden w-40 shrink-0 !text-[9px] lg:block">
+            signal
+          </span>
+          <span className="label-caps min-w-0 flex-1 !text-[9px]">pull request</span>
+          <span className="label-caps w-[10.5rem] shrink-0 !text-[9px] text-right">
+            idle / age / ±lines
+          </span>
+          <span className="w-5 shrink-0" />
+        </div>
+      )}
+
       {/* List */}
-      <div className="mt-4 max-h-[30rem] space-y-2 overflow-y-auto pr-1">
+      <div className="fade-mask-b mt-2 max-h-[30rem] space-y-1.5 overflow-y-auto pr-1 pb-6">
         {filtered.length === 0 ? (
           <motion.div
             key={`empty-${tab}`}
@@ -216,7 +198,7 @@ export default function ActionCenter({
               <CheckIcon size={28} />
             </span>
             <p className="text-fg font-medium">Inbox zero</p>
-            <p className="text-fg-muted text-sm">Nothing in this lane.</p>
+            <p className="label-caps">Nothing in this lane</p>
           </motion.div>
         ) : (
           <AnimatePresence mode="popLayout" initial={false}>
@@ -224,8 +206,11 @@ export default function ActionCenter({
               const color = bucketColor(item.bucket);
               const glow = glowFor(item.bucket);
               return (
-                <motion.div
+                <motion.a
                   key={item.number}
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
                   layout
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -235,8 +220,7 @@ export default function ActionCenter({
                     ease: "easeOut",
                     delay: Math.min(i * 0.03, 0.4),
                   }}
-                  whileHover={{ x: 4 }}
-                  className="group flex items-center gap-3 rounded-xl border border-border-muted bg-surface-2/60 px-4 py-3 transition-colors"
+                  className="group flex items-center gap-3 rounded-lg border border-border-muted bg-surface-2/50 px-4 py-3 transition-colors hover:bg-surface-2"
                   style={{ ["--row-color" as string]: color }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = color;
@@ -245,6 +229,7 @@ export default function ActionCenter({
                     e.currentTarget.style.borderColor =
                       "var(--color-border-muted)";
                   }}
+                  aria-label={`PR #${item.number} in ${item.repo}: ${item.title}`}
                 >
                   {/* Priority bar */}
                   <span
@@ -255,11 +240,25 @@ export default function ActionCenter({
                     }}
                   />
 
-                  {/* Reason chip */}
+                  {/* hover dot reveal (fixed width so columns stay registered) */}
+                  <span className="flex w-1.5 shrink-0 justify-center">
+                    <span
+                      className="block h-1.5 w-1.5 rounded-full opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                      style={{ background: color, boxShadow: `0 0 6px ${glow}` }}
+                    />
+                  </span>
+
+                  {/* index */}
+                  <span className="mono hidden w-7 shrink-0 text-[11px] text-fg-subtle sm:block">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+
+                  {/* Reason chip — fixed column, full text in tooltip */}
                   <span
-                    className="hidden shrink-0 rounded-full px-2 py-0.5 text-xs font-medium sm:inline-block"
+                    title={item.reason}
+                    className="hidden w-40 shrink-0 truncate whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider lg:inline-block"
                     style={{
-                      background: `color-mix(in srgb, ${color} 15%, transparent)`,
+                      background: `color-mix(in srgb, ${color} 13%, transparent)`,
                       color,
                     }}
                   >
@@ -287,7 +286,9 @@ export default function ActionCenter({
                         #{item.number}
                       </span>
                     </div>
-                    <p className="truncate text-fg font-medium">{item.title}</p>
+                    <p className="truncate text-fg font-medium transition-colors group-hover:text-white">
+                      {item.title}
+                    </p>
                     {item.lastActivityAt ? (
                       <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fg-subtle">
                         {item.lastActivityKind === "review" ? (
@@ -319,38 +320,34 @@ export default function ActionCenter({
                     )}
                   </div>
 
-                  {/* Meta */}
-                  <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-fg-subtle">
-                    <div className="flex items-center gap-2">
+                  {/* Meta — fixed-width tabular register */}
+                  <div className="mono flex w-[10.5rem] shrink-0 items-center justify-end gap-3 text-[11px] text-fg-subtle">
+                    <span className="flex w-12 shrink-0 items-center justify-end gap-1">
                       {item.stale && (
                         <span style={{ color: "var(--color-attention)" }}>
-                          <ClockIcon size={11} />
+                          <ClockIcon size={10} />
                         </span>
                       )}
-                      <span>{ago(item.idleDays)} idle</span>
-                    </div>
-                    <span className="hidden sm:inline">{item.ageDays}d old</span>
-                    <div className="mono flex items-center gap-1.5">
+                      <span className="text-fg-muted">{item.idleDays}d</span>
+                    </span>
+                    <span className="hidden w-10 shrink-0 text-right sm:inline">
+                      {item.ageDays}d
+                    </span>
+                    <span className="hidden w-[4.5rem] shrink-0 whitespace-nowrap text-right md:inline">
                       <span style={{ color: "var(--color-open)" }}>
                         +{compact(item.additions)}
-                      </span>
+                      </span>{" "}
                       <span style={{ color: "var(--color-closed)" }}>
                         -{compact(item.deletions)}
                       </span>
-                    </div>
+                    </span>
                   </div>
 
-                  {/* External link */}
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 rounded-md p-1.5 text-fg-subtle transition-colors hover:bg-surface hover:text-fg"
-                    aria-label={`Open PR #${item.number}`}
-                  >
-                    <ExternalIcon size={14} />
-                  </a>
-                </motion.div>
+                  {/* Arrow — whole row is the link */}
+                  <span className="grid w-5 shrink-0 place-items-center text-fg-subtle transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-fg">
+                    <ArrowUpRightIcon size={14} />
+                  </span>
+                </motion.a>
               );
             })}
           </AnimatePresence>

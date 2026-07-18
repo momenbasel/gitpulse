@@ -39,7 +39,8 @@ export default function CountUp({
       started.current = true;
       const t0 = performance.now();
       const tick = (now: number) => {
-        const p = Math.min(1, (now - t0) / duration);
+        // clamp both ends — timestamp can precede t0 or jump far past it
+        const p = Math.min(1, Math.max(0, (now - t0) / duration));
         setDisplay(value * easeOutExpo(p));
         if (p < 1) requestAnimationFrame(tick);
         else setDisplay(value);

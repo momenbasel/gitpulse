@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { useDashboard } from "@/lib/useDashboard";
-import { compact } from "@/lib/format";
 import AuroraBackground from "@/components/AuroraBackground";
 import TopBar from "@/components/TopBar";
 import StatCards from "@/components/StatCards";
@@ -13,12 +12,14 @@ import RepoBars from "@/components/RepoBars";
 import ActivityTimeline from "@/components/ActivityTimeline";
 import Languages from "@/components/Languages";
 import RecentMerges from "@/components/RecentMerges";
+import CountUp from "@/components/CountUp";
 import {
   ZapIcon,
   PullRequestIcon,
   EyeIcon,
   AlertIcon,
   GithubIcon,
+  ClockIcon,
 } from "@/lib/octicons";
 
 export default function Page() {
@@ -29,11 +30,12 @@ export default function Page() {
 
   const { profile, contributions, summary, triage } = data;
 
-  const chips = [
+  const telemetry = [
+    { icon: PullRequestIcon, label: "active", value: triage.activeTotal, color: "var(--color-accent)" },
     { icon: ZapIcon, label: "commits", value: contributions.commits, color: "var(--color-open)" },
-    { icon: PullRequestIcon, label: "PRs", value: contributions.prs, color: "var(--color-accent)" },
     { icon: EyeIcon, label: "reviews", value: contributions.reviews, color: "var(--color-merged)" },
     { icon: AlertIcon, label: "issues", value: contributions.issues, color: "var(--color-attention)" },
+    { icon: ClockIcon, label: "oldest idle", value: triage.oldestActiveDays, suffix: "d", color: "var(--color-fg-muted)" },
   ];
 
   return (
@@ -41,7 +43,7 @@ export default function Page() {
       <AuroraBackground />
       <TopBar profile={profile} isDemo={isDemo} generatedAt={data.generatedAt} />
 
-      <main className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6">
         {isDemo && <DemoBanner />}
 
         {/* Hero */}
@@ -49,35 +51,47 @@ export default function Page() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-8 mt-2"
+          className="relative mb-10 mt-2"
         >
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Your GitHub, <span className="grad-text">triaged</span>.
-              </h1>
-              <p className="mt-2 max-w-xl text-sm text-fg-muted">
-                {triage.activeTotal} open pull requests across {summary.reposTouched}{" "}
-                repositories - sorted into what needs you, not a wall of notifications.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {chips.map((c, i) => (
-                <motion.div
-                  key={c.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 + i * 0.07, duration: 0.5 }}
-                  className="flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1.5"
-                >
-                  <c.icon size={14} className="shrink-0" />
-                  <span className="mono text-sm font-semibold text-fg">
-                    {compact(c.value)}
+          <p className="label-caps">
+            GitHub pull-request triage — live instrument
+          </p>
+          <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-[1.04] tracking-[-0.03em] sm:text-[3.4rem]">
+            Your GitHub, <span className="text-accent">triaged</span>
+            <span
+              aria-hidden
+              className="ml-2 inline-block h-[0.82em] w-[3px] translate-y-[0.08em] bg-accent [animation:var(--animate-caret)]"
+            />
+          </h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-fg-muted">
+            {triage.activeTotal} open pull requests across {summary.reposTouched}{" "}
+            repositories — sorted into what needs you, not a wall of notifications.
+          </p>
+
+          {/* Telemetry strip */}
+          <div className="mt-7 flex flex-wrap overflow-hidden rounded-lg border border-border bg-surface/60 backdrop-blur-sm">
+            {telemetry.map((t, i) => (
+              <motion.div
+                key={t.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.06, duration: 0.5 }}
+                className="flex min-w-[8.5rem] flex-1 items-center gap-3 border-border-muted px-4 py-3 [&+&]:border-l"
+              >
+                <t.icon size={14} className="shrink-0" />
+                <div className="flex items-baseline gap-1.5">
+                  <span className="mono text-lg font-semibold leading-none text-fg">
+                    <CountUp value={t.value} suffix={t.suffix ?? ""} />
                   </span>
-                  <span className="text-xs text-fg-subtle">{c.label}</span>
-                </motion.div>
-              ))}
-            </div>
+                  <span className="label-caps">{t.label}</span>
+                </div>
+                <span
+                  aria-hidden
+                  className="ml-auto h-1 w-1 rounded-full"
+                  style={{ background: t.color }}
+                />
+              </motion.div>
+            ))}
           </div>
         </motion.header>
 
@@ -112,14 +126,14 @@ function DemoBanner() {
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-6 flex flex-wrap items-center gap-2 rounded-xl border border-[color:var(--color-attention)]/40 bg-[color:var(--color-attention)]/10 px-4 py-2.5 text-sm"
+      className="mb-8 flex flex-wrap items-center gap-3 rounded-lg border border-[color:var(--color-attention)]/40 bg-[color:var(--color-attention)]/8 px-4 py-2.5"
     >
       <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[color:var(--color-attention)] opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-[color:var(--color-attention)]" />
       </span>
-      <span className="font-semibold text-fg">Demo data.</span>
-      <span className="text-fg-muted">
+      <span className="label-caps !text-[color:var(--color-attention)]">Demo data</span>
+      <span className="text-sm text-fg-muted">
         Run{" "}
         <code className="mono rounded bg-canvas-inset px-1.5 py-0.5 text-xs text-fg">
           ./scripts/fetch.sh
@@ -140,14 +154,17 @@ function Footer({
   isDemo: boolean;
 }) {
   return (
-    <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-6 text-xs text-fg-subtle">
+    <footer className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-border-muted pt-6">
       <div className="flex items-center gap-2">
-        <GithubIcon size={14} />
-        <span>
-          GitPulse - {isDemo ? "demo profile" : `@${login}`}
+        <GithubIcon size={13} className="text-fg-subtle" />
+        <span className="label-caps">
+          GitPulse — {isDemo ? "demo profile" : `@${login}`}
         </span>
       </div>
-      <span className="mono">
+      <span className="label-caps hidden sm:block">
+        Rendered locally — nothing uploaded
+      </span>
+      <span className="mono text-[11px] text-fg-subtle">
         synced {new Date(generatedAt).toLocaleString("en-US")}
       </span>
     </footer>
@@ -159,12 +176,14 @@ function LoadingState() {
     <div className="relative min-h-screen">
       <AuroraBackground />
       <div className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-8 h-10 w-64 rounded-lg bg-surface shimmer-bg [animation:var(--animate-shimmer)]" />
+        <div className="mb-4 h-3 w-40 rounded-sm bg-surface shimmer-bg [animation:var(--animate-shimmer)]" />
+        <div className="mb-8 h-12 w-96 max-w-full rounded-lg bg-surface shimmer-bg [animation:var(--animate-shimmer)]" />
+        <div className="mb-8 h-16 rounded-lg bg-surface shimmer-bg [animation:var(--animate-shimmer)]" />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-24 rounded-xl bg-surface shimmer-bg [animation:var(--animate-shimmer)]"
+              className="h-28 rounded-xl bg-surface shimmer-bg [animation:var(--animate-shimmer)]"
               style={{ animationDelay: `${i * 0.1}s` }}
             />
           ))}
@@ -184,15 +203,16 @@ function ErrorState({ message }: { message: string | null }) {
         animate={{ opacity: 1, scale: 1 }}
         className="card max-w-md p-8 text-center"
       >
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--color-accent)]/15">
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-xl border border-[color:var(--color-accent)]/30 bg-[color:var(--color-accent)]/10">
           <GithubIcon size={28} className="text-accent" />
         </div>
-        <h2 className="text-xl font-bold">No data yet</h2>
+        <p className="label-caps mb-2">No signal</p>
+        <h2 className="text-xl font-bold tracking-tight">No data yet</h2>
         <p className="mt-2 text-sm text-fg-muted">
           {message ?? "Could not load dashboard data."}
         </p>
-        <div className="mono mt-5 rounded-lg bg-canvas-inset p-3 text-left text-sm text-fg">
-          ./scripts/fetch.sh
+        <div className="mono mt-5 rounded-lg border border-border-muted bg-canvas-inset p-3 text-left text-sm text-fg">
+          $ ./scripts/fetch.sh
         </div>
         <p className="mt-3 text-xs text-fg-subtle">
           Pulls your PR activity with the GitHub CLI, then reload.

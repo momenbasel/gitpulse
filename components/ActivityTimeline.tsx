@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef, useState, type PointerEvent } from "react";
 import { motion } from "motion/react";
 import type { TimelinePoint } from "@/lib/types";
 import { monthLabel } from "@/lib/format";
 import { ZapIcon } from "@/lib/octicons";
+import SectionHeader from "@/components/SectionHeader";
 
 interface Props {
   timeline: TimelinePoint[];
@@ -26,10 +28,12 @@ const SERIES: Series[] = [
   { key: "merged", stroke: "var(--color-merged)", gradId: "gp-area-merged" },
 ];
 
-/** Animated line + area chart of created vs merged PRs over time. */
+/** Animated line + area chart with an interactive crosshair scrubber. */
 export default function ActivityTimeline({ timeline }: Props) {
   const data = timeline.slice(-18);
   const n = data.length;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const yMax = Math.max(
     1,
@@ -80,57 +84,92 @@ export default function ActivityTimeline({ timeline }: Props) {
 
   const viewport = { once: true, margin: "-60px" } as const;
 
+  /** Map a pointer event to the nearest data index, in viewBox space. */
+  const trackPointer = (e: PointerEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg || n === 0) return;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0) return;
+    const vx = ((e.clientX - rect.left) / rect.width) * W;
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      const dist = Math.abs(xAt(i) - vx);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+    setHoverIdx(best);
+  };
+
+  const hoverPoint = hoverIdx !== null ? data[hoverIdx] : null;
+
   return (
     <section className="card p-5 sm:p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{
-              color: "var(--color-accent)",
-              background: "rgba(47,129,247,0.12)",
-              border: "1px solid rgba(47,129,247,0.25)",
-            }}
-          >
-            <ZapIcon size={16} />
-          </span>
-          <div>
-            <h3 className="text-fg font-semibold leading-tight">
-              Activity over time
-            </h3>
-            <p className="text-fg-subtle text-xs">Created vs merged pull requests</p>
+      <SectionHeader
+        index="04"
+        title="Activity over time"
+        hint="Scrub the chart for exact months"
+        icon={<ZapIcon size={15} />}
+        iconColor="var(--color-accent)"
+        right={
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: "var(--color-accent)" }}
+              />
+              <span className="label-caps">Created</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: "var(--color-merged)" }}
+              />
+              <span className="label-caps">Merged</span>
+            </span>
           </div>
-        </div>
-        {/* Legend */}
-        <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1.5 text-fg-muted">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ background: "var(--color-accent)" }}
-            />
-            Created
-          </span>
-          <span className="flex items-center gap-1.5 text-fg-muted">
-            <span
-              className="inline-block h-2.5 w-2.5 rounded-full"
-              style={{ background: "var(--color-merged)" }}
-            />
-            Merged
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Chart */}
-      <div className="mt-5 w-full">
+      <div className="relative mt-5 w-full">
+        {/* scrubber readout */}
+        <div
+          aria-live="polite"
+          className={`mono pointer-events-none absolute right-1 top-0 z-10 flex items-center gap-3 rounded-md border border-border bg-canvas-inset/90 px-2.5 py-1.5 text-[11px] backdrop-blur transition-opacity duration-150 ${
+            hoverPoint ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          {hoverPoint && (
+            <>
+              <span className="font-semibold text-fg">
+                {monthLabel(hoverPoint.month)}
+              </span>
+              <span className="flex items-center gap-1 text-fg-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
+                {hoverPoint.created} created
+              </span>
+              <span className="flex items-center gap-1 text-fg-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-merged)]" />
+                {hoverPoint.merged} merged
+              </span>
+            </>
+          )}
+        </div>
+
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="xMidYMid meet"
           width="100%"
           height="auto"
           role="img"
           aria-label="Line chart of created and merged pull requests over time"
-          style={{ display: "block", overflow: "visible" }}
+          style={{ display: "block", overflow: "visible", cursor: "crosshair" }}
+          onPointerMove={trackPointer}
+          onPointerLeave={() => setHoverIdx(null)}
         >
           <defs>
             <linearGradient id="gp-area-created" x1="0" y1="0" x2="0" y2="1">
@@ -178,7 +217,12 @@ export default function ActivityTimeline({ timeline }: Props) {
                 y={H - 10}
                 textAnchor="middle"
                 fontSize={10}
-                fill="var(--color-fg-subtle)"
+                fill={
+                  hoverIdx === i
+                    ? "var(--color-fg)"
+                    : "var(--color-fg-subtle)"
+                }
+                style={{ transition: "fill 120ms ease" }}
               >
                 {monthLabel(d.month)}
               </text>
@@ -227,7 +271,7 @@ export default function ActivityTimeline({ timeline }: Props) {
                 key={`dot-${s.key}-${i}`}
                 cx={p.x}
                 cy={p.y}
-                r={3}
+                r={hoverIdx === i ? 4.5 : 3}
                 fill="var(--color-canvas)"
                 stroke={s.stroke}
                 strokeWidth={1.75}
@@ -240,9 +284,40 @@ export default function ActivityTimeline({ timeline }: Props) {
                   damping: 20,
                   delay: 0.55 + i * 0.04,
                 }}
-                style={{ transformOrigin: `${p.x}px ${p.y}px` }}
+                style={{
+                  transformOrigin: `${p.x}px ${p.y}px`,
+                  transition: "r 120ms ease",
+                }}
               />
             ))
+          )}
+
+          {/* Crosshair */}
+          {hoverIdx !== null && (
+            <g pointerEvents="none">
+              <line
+                x1={xAt(hoverIdx)}
+                y1={PAD_T}
+                x2={xAt(hoverIdx)}
+                y2={PAD_T + PLOT_H}
+                stroke="var(--color-fg-subtle)"
+                strokeWidth={1}
+                strokeDasharray="2 3"
+                opacity={0.6}
+              />
+              {SERIES.map((s) => (
+                <circle
+                  key={`xh-${s.key}`}
+                  cx={xAt(hoverIdx)}
+                  cy={yAt(data[hoverIdx][s.key])}
+                  r={6.5}
+                  fill="none"
+                  stroke={s.stroke}
+                  strokeWidth={1}
+                  opacity={0.5}
+                />
+              ))}
+            </g>
           )}
         </svg>
       </div>

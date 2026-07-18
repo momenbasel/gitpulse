@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
 import type { Language } from "@/lib/types";
 import { CodeIcon } from "@/lib/octicons";
 import { compact } from "@/lib/format";
 import CountUp from "@/components/CountUp";
+import SectionHeader from "@/components/SectionHeader";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6",
@@ -38,36 +40,38 @@ export default function Languages({ languages }: { languages: Language[] }) {
   const total = langs.reduce((sum, l) => sum + l.count, 0);
   const pctOf = (count: number): number =>
     total > 0 ? (count / total) * 100 : 0;
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <section className="card p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg"
-            style={{
-              backgroundColor: "color-mix(in srgb, var(--color-accent) 14%, transparent)",
-              color: "var(--color-accent)",
-            }}
-          >
-            <CodeIcon size={16} />
+    <section className="card p-5 sm:p-6" onMouseLeave={() => setHovered(null)}>
+      <SectionHeader
+        index="08"
+        title="Languages"
+        hint="Hover a row to isolate it in the bar"
+        icon={<CodeIcon size={15} />}
+        iconColor="var(--color-accent)"
+        right={
+          <span className="mono text-sm text-fg-muted">
+            <CountUp value={total} /> <span className="label-caps">repos</span>
           </span>
-          <h2 className="font-semibold text-fg">Languages</h2>
-        </div>
-        <span className="mono text-sm text-fg-muted">
-          <CountUp value={total} /> repos
-        </span>
-      </div>
+        }
+      />
 
-      {/* GitHub language bar */}
+      {/* GitHub language bar — segments react to legend hover */}
       <div className="mt-5 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-2">
         {langs.map((lang, i) => {
           const pct = pctOf(lang.count);
+          const dimmed = hovered !== null && hovered !== lang.name;
           return (
             <motion.div
               key={lang.name}
               className="h-full first:rounded-l-full last:rounded-r-full"
-              style={{ backgroundColor: colorFor(lang.name) }}
+              style={{
+                backgroundColor: colorFor(lang.name),
+                opacity: dimmed ? 0.25 : 1,
+                transition: "opacity 180ms ease, filter 180ms ease",
+                filter: hovered === lang.name ? "brightness(1.3)" : "none",
+              }}
               initial={{ width: 0 }}
               whileInView={{ width: `${pct}%` }}
               viewport={{ once: true, margin: "-60px" }}
@@ -76,6 +80,7 @@ export default function Languages({ languages }: { languages: Language[] }) {
                 ease: "easeOut",
                 delay: 0.1 + i * 0.04,
               }}
+              onMouseEnter={() => setHovered(lang.name)}
               title={`${lang.name} ${pct.toFixed(1)}%`}
             />
           );
@@ -83,13 +88,15 @@ export default function Languages({ languages }: { languages: Language[] }) {
       </div>
 
       {/* Two-column legend */}
-      <ul className="mt-5 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+      <ul className="mt-5 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
         {langs.map((lang, i) => {
           const pct = pctOf(lang.count);
           return (
             <motion.li
               key={lang.name}
-              className="group flex items-center gap-2 text-sm"
+              className={`group flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                hovered === lang.name ? "bg-surface-2" : ""
+              }`}
               initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
@@ -98,7 +105,11 @@ export default function Languages({ languages }: { languages: Language[] }) {
                 ease: "easeOut",
                 delay: 0.15 + i * 0.04,
               }}
+              onMouseEnter={() => setHovered(lang.name)}
             >
+              <span className="mono w-5 shrink-0 text-[10px] text-fg-subtle">
+                {String(i + 1).padStart(2, "0")}
+              </span>
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full transition-transform duration-200 group-hover:scale-150"
                 style={{ backgroundColor: colorFor(lang.name) }}

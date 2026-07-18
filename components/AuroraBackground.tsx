@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Fixed, GPU-cheap animated backdrop: three slow-drifting color blobs over the
- * dotted grid defined in globals.css. Pure CSS keyframes (animate-aurora,
- * animate-float) - no JS, respects prefers-reduced-motion.
+ * Fixed instrument backdrop: a slow-panning engineering grid sheet with one
+ * restrained signal-blue glow and a bottom vignette. Pure CSS keyframes,
+ * GPU-cheap, respects prefers-reduced-motion (globals.css kills durations).
  */
 export default function AuroraBackground() {
   return (
@@ -11,19 +11,28 @@ export default function AuroraBackground() {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
+      {/* engineering grid sheet, slowly panning */}
+      <div className="instrument-grid absolute inset-0 opacity-70 [animation:var(--animate-grid-pan)]" />
+
+      {/* single signal glow, top-left */}
       <div
-        className="absolute -left-40 -top-40 h-[42rem] w-[42rem] rounded-full opacity-[0.22] blur-[120px] [animation:var(--animate-aurora)]"
-        style={{ background: "radial-gradient(circle, #1f6feb 0%, transparent 60%)" }}
+        className="absolute -left-48 -top-48 h-[46rem] w-[46rem] rounded-full opacity-[0.13] blur-[140px]"
+        style={{
+          background:
+            "radial-gradient(circle, var(--color-accent) 0%, transparent 62%)",
+        }}
       />
+      {/* faint secondary signal, bottom-right — same hue family */}
       <div
-        className="absolute -right-40 top-20 h-[38rem] w-[38rem] rounded-full opacity-[0.18] blur-[130px] [animation:var(--animate-aurora)] [animation-delay:-6s]"
-        style={{ background: "radial-gradient(circle, #a371f7 0%, transparent 60%)" }}
+        className="absolute -bottom-56 -right-40 h-[40rem] w-[40rem] rounded-full opacity-[0.07] blur-[150px]"
+        style={{
+          background:
+            "radial-gradient(circle, var(--color-accent-emphasis) 0%, transparent 60%)",
+        }}
       />
-      <div
-        className="absolute bottom-[-12rem] left-1/3 h-[34rem] w-[34rem] rounded-full opacity-[0.14] blur-[130px] [animation:var(--animate-aurora)] [animation-delay:-12s]"
-        style={{ background: "radial-gradient(circle, #3fb950 0%, transparent 60%)" }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#010409]" />
+
+      {/* vignette to seat content into the canvas */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-canvas-inset" />
     </div>
   );
 }

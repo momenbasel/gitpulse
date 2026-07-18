@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import CornerBrackets from "@/components/CornerBrackets";
 
 interface Props {
   open: boolean;
@@ -47,7 +48,7 @@ export default function PRListModal({
         >
           {/* backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/65 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden
           />
@@ -61,35 +62,53 @@ export default function PRListModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
-            className="card relative z-10 mt-4 flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden p-0 sm:mt-10"
-            style={{ boxShadow: `0 24px 80px -20px ${accent}55, 0 0 0 1px var(--color-border)` }}
+            className="card group relative z-10 mt-4 flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden p-0 sm:mt-10"
+            style={{
+              ["--bracket-color" as string]: accent,
+              boxShadow: `0 24px 80px -20px ${accent}40, 0 0 0 1px var(--color-border)`,
+            }}
           >
-            {/* top accent line */}
-            <div className="h-1 w-full shrink-0" style={{ background: accent }} />
+            <CornerBrackets offset={8} />
+
+            {/* top accent hairline */}
+            <div className="h-px w-full shrink-0" style={{ background: accent }} />
 
             <header className="flex items-center gap-3 border-b border-border-muted px-5 py-4">
               <span
-                className="grid h-9 w-9 place-items-center rounded-lg text-sm font-bold"
-                style={{ background: `color-mix(in srgb, ${accent} 16%, transparent)`, color: accent }}
+                className="mono grid h-9 w-9 shrink-0 place-items-center rounded-md border text-sm font-bold"
+                style={{
+                  borderColor: `color-mix(in srgb, ${accent} 35%, transparent)`,
+                  background: `color-mix(in srgb, ${accent} 10%, transparent)`,
+                  color: accent,
+                }}
               >
                 {count}
               </span>
               <div className="min-w-0">
-                <h2 className="truncate font-semibold text-fg">{title}</h2>
+                <h2 className="truncate text-[13px] font-semibold uppercase tracking-[0.14em] text-fg">
+                  {title}
+                </h2>
                 {subtitle && <p className="truncate text-xs text-fg-muted">{subtitle}</p>}
               </div>
-              <button
-                onClick={onClose}
-                aria-label="Close"
-                className="ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-lg text-fg-subtle transition-colors hover:bg-surface-2 hover:text-fg"
-              >
-                <svg viewBox="0 0 16 16" width={16} height={16} fill="currentColor" aria-hidden>
-                  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.749.749 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.749.749 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-                </svg>
-              </button>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <kbd className="mono hidden rounded-sm border border-border-muted bg-canvas-inset px-1.5 py-0.5 text-[10px] text-fg-subtle sm:block">
+                  esc
+                </kbd>
+                <button
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="grid h-8 w-8 place-items-center rounded-md border border-transparent text-fg-subtle transition-colors hover:border-border hover:bg-surface-2 hover:text-fg"
+                >
+                  <svg viewBox="0 0 16 16" width={16} height={16} fill="currentColor" aria-hidden>
+                    <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.749.749 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.749.749 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                  </svg>
+                </button>
+              </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">{children}</div>
+            <div className="fade-mask-b min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-6 sm:px-4">
+              {children}
+            </div>
           </motion.div>
         </motion.div>
       )}

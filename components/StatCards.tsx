@@ -17,6 +17,8 @@ import {
 import { compact, ago, statusColor } from "@/lib/format";
 import CountUp from "@/components/CountUp";
 import PRListModal from "@/components/PRListModal";
+import SectionHeader from "@/components/SectionHeader";
+import CornerBrackets from "@/components/CornerBrackets";
 
 type IconC = (p: { size?: number; className?: string }) => JSX.Element;
 type View = "prs" | "repos";
@@ -72,12 +74,12 @@ function PRRows({ items }: { items: PR[] }) {
 
   return (
     <>
-      <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[color:var(--color-surface)]/80 px-1 pb-2 pt-1 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[color:var(--color-surface)]/85 px-1 pb-2 pt-1 backdrop-blur">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={`Search ${items.length} pull requests...`}
-          className="w-full rounded-lg border border-border bg-canvas-inset px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-[color:var(--color-accent)]"
+          className="mono w-full rounded-md border border-border bg-canvas-inset px-3 py-2 text-sm text-fg outline-none placeholder:text-fg-subtle focus:border-[color:var(--color-accent)]"
         />
       </div>
       {filtered.length === 0 ? (
@@ -164,12 +166,15 @@ function RepoRows({ items }: { items: PR[] }) {
             className="rounded-lg border border-border-muted bg-surface-2/40 px-3 py-2.5"
           >
             <div className="mb-1.5 flex items-center gap-1.5 text-sm">
+              <span className="mono w-6 shrink-0 text-[10px] text-fg-subtle">
+                {String(i + 1).padStart(2, "0")}
+              </span>
               <RepoIcon size={13} className="shrink-0 text-fg-subtle" />
               <span className="truncate text-fg">{r.repo}</span>
               {r.private && <Lock />}
               <span className="mono ml-auto shrink-0 text-fg-muted">{r.total}</span>
             </div>
-            <div className="flex h-1.5 overflow-hidden rounded-full bg-surface">
+            <div className="ml-6 flex h-1.5 overflow-hidden rounded-full bg-surface">
               {seg(r.merged, "var(--color-merged)")}
               {seg(r.open, "var(--color-open)")}
               {seg(r.closed, "var(--color-closed)")}
@@ -240,8 +245,19 @@ export default function StatCards({
     active?.view === "repos" ? new Set(items.map((p) => p.repo)).size : items.length;
 
   return (
-    <>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <section>
+      <SectionHeader
+        index="01"
+        title="Overview"
+        hint="Every card drills into the pull requests behind it"
+        right={
+          <span className="label-caps hidden sm:block">
+            {cards.length} signals · click to inspect
+          </span>
+        }
+      />
+
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
@@ -253,21 +269,19 @@ export default function StatCards({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.05, ease: "easeOut" }}
-              whileHover={{ y: -4 }}
+              whileHover={{ y: -3 }}
               whileTap={{ scale: 0.98 }}
-              className="card group relative cursor-pointer overflow-hidden p-4 text-left transition-colors duration-300"
+              className="card group relative cursor-pointer overflow-hidden p-4 text-left transition-colors duration-300 hover:border-border"
+              style={{ ["--bracket-color" as string]: c.color }}
               aria-label={`${c.label}: view ${c.value}`}
             >
+              {/* orbiting border beam on hover */}
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-[14px] border border-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                style={{ borderColor: c.color }}
+                className="beam pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{ ["--beam-color" as string]: c.color }}
               />
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-50 blur-2xl transition-opacity duration-300 group-hover:opacity-90"
-                style={{ background: `radial-gradient(circle, color-mix(in srgb, ${c.color} 55%, transparent), transparent 70%)` }}
-              />
+              <CornerBrackets offset={5} />
 
               {/* hover "view" affordance */}
               <span
@@ -278,18 +292,31 @@ export default function StatCards({
                 <ExternalIcon size={13} />
               </span>
 
-              <div className="relative flex flex-col gap-2">
-                <span
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
-                  style={{ backgroundColor: `color-mix(in srgb, ${c.color} 12%, transparent)`, color: c.color }}
-                >
-                  <Icon size={16} />
-                </span>
-                <div className="mono text-2xl font-bold leading-none text-fg">
+              <div className="relative flex flex-col gap-2.5">
+                <div className="flex items-start justify-between">
+                  <span
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border transition-transform duration-300 group-hover:scale-110"
+                    style={{
+                      borderColor: `color-mix(in srgb, ${c.color} 28%, transparent)`,
+                      backgroundColor: `color-mix(in srgb, ${c.color} 9%, transparent)`,
+                      color: c.color,
+                    }}
+                  >
+                    <Icon size={15} />
+                  </span>
+                  <span className="mono text-[10px] tracking-wider text-fg-subtle/80">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <div className="mono text-[1.65rem] font-bold leading-none tracking-tight text-fg">
                   <CountUp value={c.value} decimals={c.decimals} suffix={c.suffix} />
                 </div>
-                <div className="text-xs font-medium text-fg-muted">{c.label}</div>
-                {c.sub && <div className="truncate text-[11px] text-fg-subtle">{c.sub}</div>}
+                <div className="label-caps !text-[10px]">{c.label}</div>
+                {c.sub && (
+                  <div className="truncate border-t border-border-muted pt-2 text-[11px] text-fg-subtle">
+                    {c.sub}
+                  </div>
+                )}
               </div>
             </motion.button>
           );
@@ -306,6 +333,6 @@ export default function StatCards({
       >
         {active?.view === "repos" ? <RepoRows items={items} /> : <PRRows items={items} />}
       </PRListModal>
-    </>
+    </section>
   );
 }
